@@ -22,7 +22,7 @@ def hostIsOnline(hostIp):
 
 # Enter network and netmask accordingly -> 192.145.184.1/24: network="192.145.184.1"; netmask="24"
 # returns an array of strings with live host ip's
-def pingSweep(network, netmask):
+def ping_sweep(network, netmask):
 
     live_hosts = []
     total_hosts = 0
@@ -40,20 +40,17 @@ def pingSweep(network, netmask):
         # -> if the host respondes it is marked as online
         thread_output = {executor.submit(hostIsOnline, host): host for host in network.iter_hosts()}
 
+        # Getting results
         for future in as_completed(thread_output):
 
             host = thread_output[future]
             res = future.result()
 
             scanned_hosts+=1
-            print(f"Scanning: {scanned_hosts}/{total_hosts}", end="\r")
+            print(f"Scanning: {scanned_hosts}/{total_hosts} possible hosts", end="\r")
 
             if res == True:
                 live_hosts.append(str(host))
-                print(f"Host {host} is online")
+                print(f"\r\033[KHost {host} is online")
 
     return live_hosts
-
-
-
-print(pingSweep("192.168.178.1", "24"))
