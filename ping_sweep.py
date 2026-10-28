@@ -1,8 +1,15 @@
+# Author: Timo Ihbe
 import sys
+import logging
 import os
 from netaddr import IPNetwork
-from scapy.all import sr1,IP,ICMP
+from scapy.all import sr1,IP,ICMP,Ether
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# Settinig max threads to the cpu core count
+max_threads = os.cpu_count()
+# Surpressing scapy warnings, because console would be full of: WARNING: MAC address to reach destination not found. Using broadcast.
+logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 
 # Send ICMP packket to the host
 # -> returns True if the host respondes
@@ -26,15 +33,24 @@ def pingSweep(network, netmask):
     for host_ip in network.iter_hosts():
         total_hosts+=1
 
-    # Send ICMP packket to every host on the network
-    # -> if the host respondes it is marked as online
-    for host_ip in network.iter_hosts():
-        scanned_hosts+=1
-        print(f"Scanning: {scanned_hosts}/{total_hosts}", end="\r")
+    # Using Threads to optimize performance
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
 
-        if hostIsOnline(host_ip):
-            live_hosts.append(str(host_ip))
-            print(f"Host {host_ip} is online")
+        # Send ICMP packket to every host on the network
+        # -> if the host respondes it is marked as online
+        thread_output = {executor.submit(hostIsOnline, host): host for host in network.iter_hosts()}
+
+        for future in as_completed(thread_output):
+
+            host = thread_output[future]
+            res = future.result()
+
+            scanned_hosts+=1
+            print(f"Scanning: {scanned_hosts}/{total_hosts}", end="\r")
+
+            if res == True:
+                live_hosts.append(str(host))
+                print(f"Host {host} is online")
 
     return live_hosts
 
