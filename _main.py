@@ -1,5 +1,6 @@
 from ping_sweep import ping_sweep
 from scan_ports import scan_port, scan_top_ports
+from get_service_banner import get_service_banner
 
 #print(ping_sweep("192.168.178.1", "24"))
 
@@ -19,6 +20,8 @@ def full_network_scan(ip, netmask):
         if ports is not None:
             for port in ports:
                 print(f" {port} | open")
+                print("Service banner:")
+                print(get_service_banner(host, port))
         else:
             print(" No open ports discoverd")
 

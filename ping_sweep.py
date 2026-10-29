@@ -16,7 +16,7 @@ logging.getLogger("scapy.runtime").setLevel(logging.ERROR)
 def hostIsOnline(hostIp):
     # Here the actual packet is made, send and an answer recieved using scapy
     res = sr1(IP(dst=str(hostIp))/ICMP(), timeout=1, verbose=0)
-    if res is not None:
+    if res and res.haslayer(ICMP) and res[ICMP].type == 0: # Type 0 is Echo Reply:
         return True
     return False
 
